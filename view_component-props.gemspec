@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "A ViewComponent extension for working with component props"
   spec.description = <<~TEXT
-    A ViewComponent extension for working with component props. Functionality is in active development.
+    A ViewComponent extension that adds a `prop` DSL with defaults, fallbacks, required props, casting, enum validation, custom validators, and a pluggable caster registry. Patches ViewComponent::Base via a Rails Railtie (or on require outside Rails) so components accept a props hash out of the box.
   TEXT
 
   spec.homepage = "https://github.com/kinnell/view_component-props"
@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = Gem::Requirement.new(">= 3.0")
   spec.required_rubygems_version = Gem::Requirement.new(">= 2.0")
 
+  spec.add_dependency "activemodel", ">= 6.0", "< 9.0"
   spec.add_dependency "activesupport", ">= 6.0", "< 9.0"
   spec.add_dependency "view_component", ">= 3.0", "< 5.0"
 end

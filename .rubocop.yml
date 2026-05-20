@@ -43,7 +43,14 @@ Naming/PredicateMethod:
 Style/AccessorGrouping:
   Enabled: false
 
+Style/BlockDelimiters:
+  BracesRequiredMethods:
+    - expect
+
 Style/Documentation:
+  Enabled: false
+
+Style/Lambda:
   Enabled: false
 
 Style/RedundantBegin:
@@ -54,6 +61,9 @@ Style/RegexpLiteral:
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
+
+Style/SymbolProc:
+  Enabled: false
 
 Style/TrailingCommaInArrayLiteral:
   EnforcedStyleForMultiline: comma
