@@ -1,14 +1,17 @@
 # ViewComponent::Props
 
-A [ViewComponent](https://viewcomponent.org) extension for working with component props.
+A [ViewComponent](https://viewcomponent.org) extension that adds a `prop` DSL to components: defaults, fallbacks, required props, casting, enum validation, custom validators, and a pluggable caster registry.
 
-> [!NOTE]
-> This gem is in early development. The public API is not yet stable and there is no usable functionality in this release. Documentation and examples will land alongside the first feature release.
+In Rails apps, a Railtie patches `ViewComponent::Base` during boot (enabled by default). Outside Rails, the gem patches on require. Inherit as usual and pass a props hash to `new`.
 
 ## Requirements
 
 - Ruby >= 3.0
-- ViewComponent >= 3.0
+- [ViewComponent](https://viewcomponent.org) >= 3.0, < 5.0
+- ActiveSupport >= 6.0, < 9.0
+- ActiveModel >= 6.0, < 9.0
+
+Rails is supported via a Railtie but not required; the gem auto-installs into `ViewComponent::Base` on require when Rails is not loaded.
 
 ## Installation
 
@@ -26,7 +29,134 @@ bundle install
 
 ## Usage
 
-Coming soon.
+```ruby
+class ButtonComponent < ViewComponent::Base
+  prop :label, required: true
+  prop :variant, cast: :symbol, enum: %i[primary secondary danger], default: :primary
+  prop :disabled, cast: :boolean, default: false
+
+  def call
+    tag.button(@props[:label], class: "btn btn-#{@props[:variant]}", disabled: @props[:disabled])
+  end
+end
+
+render ButtonComponent.new(label: "Save", variant: "primary")
+```
+
+Resolved props are available as `props` (or `@props`), a frozen hash you can read with either string or symbol keys. The original input, before any casting or defaults are applied, is available as `raw_props` (or `@raw_props`).
+
+Once props are resolved, `#after_initialize` runs, so you can override it for any setup that depends on `props`.
+
+### Options
+
+Each `prop` accepts:
+
+| Option         | Purpose                                                              |
+| -------------- | ------------------------------------------------------------------- |
+| `default:`     | Value (or callable) used when the key is missing from the input.    |
+| `fallback:`    | Value (or callable) used when the resolved value is `nil`.          |
+| `required:`    | Raises `RequiredPropError` when the resolved value is `nil`.        |
+| `cast:`        | Coerces the value. A built-in caster name or any callable.          |
+| `enum:`        | Restricts the value to a list of allowed values.                    |
+| `validate:`    | Callable that must return truthy for the value to be accepted.      |
+| `description:` | Free-form string for documentation and tooling.                     |
+
+Defaults and fallbacks can also be callables, evaluated in the context of the component instance. Use `raw_props` to read other props from the constructor input:
+
+```ruby
+class AvatarComponent < ViewComponent::Base
+  prop :user, required: true
+  prop :alt, default: -> { "#{raw_props[:user].name}'s avatar" }
+end
+```
+
+### Casters
+
+Built-in casters: `:integer`, `:float`, `:string`, `:symbol`, `:boolean`, `:array`, `:hash`, `:decimal`, `:date`, `:datetime`.
+
+A `nil` value is never cast and stays `nil`. Use `default:` or `fallback:` when you need a value for a missing or `nil` prop.
+
+Register custom casters in the configuration block:
+
+```ruby
+ViewComponent::Props.configure do |config|
+  config.register_caster(:slug) do |value|
+    value.to_s.parameterize
+  end
+end
+
+class HeadingComponent < ViewComponent::Base
+  prop :anchor, cast: :slug
+end
+```
+
+Built-in casters can be overridden the same way by registering the same key again in `configure`.
+
+Or pass a lambda inline:
+
+```ruby
+prop :code, cast: ->(value) { value.to_s.upcase }
+```
+
+### Strict props
+
+```ruby
+class FormFieldComponent < ViewComponent::Base
+  reject_undefined_props!
+
+  prop :name, required: true
+  prop :label
+end
+
+FormFieldComponent.new(name: "email", typo: true)
+# => raises ViewComponent::Props::UnknownPropsError
+```
+
+### Custom base classes
+
+`ViewComponent::Props.install!(MyComponentBase)` applies the same patch to another class (idempotent). Useful if your app uses a shared component superclass that does **not** inherit from `ViewComponent::Base`.
+
+`install!` no-ops when the target already includes `Definable` through any ancestor, so calling it on a subclass of `ViewComponent::Base` does nothing (the patch is already inherited). You only need it for base classes outside the `ViewComponent::Base` hierarchy.
+
+## Configuration
+
+### Rails
+
+Disable auto-install in `config/application.rb`:
+
+```ruby
+config.view_component_props.auto_include = false
+```
+
+When enabled (the default), `ViewComponent::Base` is patched after initializers load so `config/initializers` can configure the gem first.
+
+### Initializer
+
+```ruby
+ViewComponent::Props.configure do |config|
+  config.reject_undefined_props = true
+
+  config.register_caster(:slug) do |value|
+    value.to_s.parameterize
+  end
+end
+```
+
+When `reject_undefined_props` is `true`, every component rejects unknown prop keys by default. Override per class with `reject_undefined_props!` or `permit_undefined_props!`.
+
+### Non-Rails
+
+Auto-install runs on require when `configuration.auto_include` is `true` (the default). Because it is read at require time, you must configure it **before** requiring the gem for it to have any effect:
+
+```ruby
+require "view_component/props/configuration"
+ViewComponent::Props.configure { |config| config.auto_include = false }
+
+require "view_component/props"
+ViewComponent::Props.install!
+```
+
+Configuring `auto_include` _after_ `require "view_component/props"` cannot reverse the install that already happened. Note this `configuration.auto_include` switch is consulted only outside Rails; in Rails the equivalent switch is `config.view_component_props.auto_include`, handled by the Railtie.
 
 ## Development
 
