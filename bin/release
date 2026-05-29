@@ -21,7 +21,8 @@ readonly BRIGHT_WHITE='\033[0;97m'
 
 readonly GEMSPEC=(*.gemspec)
 readonly GEM_NAME="${GEMSPEC%.gemspec}"
-readonly VERSION_FILE="lib/${GEM_NAME}/version.rb"
+readonly LIB_NAME="${GEM_NAME//-/_}"
+readonly VERSION_FILE="lib/${LIB_NAME}/version.rb"
 readonly CHANGELOG_FILE="CHANGELOG.md"
 readonly UNRELEASED_HEADER="## [X.X.X] - YYYY-MM-DD"
 

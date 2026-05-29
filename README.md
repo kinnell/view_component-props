@@ -1,4 +1,4 @@
-# ViewComponent::Props
+# ViewComponentProps
 
 A [ViewComponent](https://viewcomponent.org) extension that adds a `prop` DSL to components: defaults, fallbacks, required props, casting, enum validation, custom validators, and a pluggable caster registry.
 
@@ -31,16 +31,33 @@ bundle install
 
 ```ruby
 class ButtonComponent < ViewComponent::Base
+  CLASS = %w[
+    px-9
+    py-3
+    text-lg
+    font-medium
+    tracking-wider
+    ring-0
+  ].freeze
+
   prop :label, required: true
-  prop :variant, cast: :symbol, enum: %i[primary secondary danger], default: :primary
+  prop :shape, cast: :symbol, enum: %i[pill rounded rectangle], default: :pill
   prop :disabled, cast: :boolean, default: false
 
+  def before_render
+    @class = cn(CLASS, {
+      "rounded-full" => @props[:shape] == :pill,
+      "rounded-xl" => @props[:shape] == :rounded,
+      "rounded-none" => @props[:shape] == :rectangle,
+    }, @props[:class])
+  end
+
   def call
-    tag.button(@props[:label], class: "btn btn-#{@props[:variant]}", disabled: @props[:disabled])
+    tag.button(@props[:label], class: @class, disabled: @props[:disabled])
   end
 end
 
-render ButtonComponent.new(label: "Save", variant: "primary")
+render ButtonComponent.new(label: "Save", shape: :rounded)
 ```
 
 Resolved props are available as `props` (or `@props`), a frozen hash you can read with either string or symbol keys. The original input, before any casting or defaults are applied, is available as `raw_props` (or `@raw_props`).
@@ -51,15 +68,15 @@ Once props are resolved, `#after_initialize` runs, so you can override it for an
 
 Each `prop` accepts:
 
-| Option         | Purpose                                                              |
-| -------------- | ------------------------------------------------------------------- |
-| `default:`     | Value (or callable) used when the key is missing from the input.    |
-| `fallback:`    | Value (or callable) used when the resolved value is `nil`.          |
-| `required:`    | Raises `RequiredPropError` when the resolved value is `nil`.        |
-| `cast:`        | Coerces the value. A built-in caster name or any callable.          |
-| `enum:`        | Restricts the value to a list of allowed values.                    |
-| `validate:`    | Callable that must return truthy for the value to be accepted.      |
-| `description:` | Free-form string for documentation and tooling.                     |
+| Option         | Purpose                                                          |
+| -------------- | ---------------------------------------------------------------- |
+| `default:`     | Value (or callable) used when the key is missing from the input. |
+| `fallback:`    | Value (or callable) used when the resolved value is `nil`.       |
+| `required:`    | Raises `RequiredPropError` when the resolved value is `nil`.     |
+| `cast:`        | Coerces the value. A built-in caster name or any callable.       |
+| `enum:`        | Restricts the value to a list of allowed values.                 |
+| `validate:`    | Callable that must return truthy for the value to be accepted.   |
+| `description:` | Free-form string for documentation and tooling.                  |
 
 Defaults and fallbacks can also be callables, evaluated in the context of the component instance. Use `raw_props` to read other props from the constructor input:
 
@@ -79,7 +96,7 @@ A `nil` value is never cast and stays `nil`. Use `default:` or `fallback:` when 
 Register custom casters in the configuration block:
 
 ```ruby
-ViewComponent::Props.configure do |config|
+ViewComponentProps.configure do |config|
   config.register_caster(:slug) do |value|
     value.to_s.parameterize
   end
@@ -109,12 +126,12 @@ class FormFieldComponent < ViewComponent::Base
 end
 
 FormFieldComponent.new(name: "email", typo: true)
-# => raises ViewComponent::Props::UnknownPropsError
+# => raises ViewComponentProps::UnknownPropsError
 ```
 
 ### Custom base classes
 
-`ViewComponent::Props.install!(MyComponentBase)` applies the same patch to another class (idempotent). Useful if your app uses a shared component superclass that does **not** inherit from `ViewComponent::Base`.
+`ViewComponentProps.install!(MyComponentBase)` applies the same patch to another class (idempotent). Useful if your app uses a shared component superclass that does **not** inherit from `ViewComponent::Base`.
 
 `install!` no-ops when the target already includes `Definable` through any ancestor, so calling it on a subclass of `ViewComponent::Base` does nothing (the patch is already inherited). You only need it for base classes outside the `ViewComponent::Base` hierarchy.
 
@@ -133,7 +150,7 @@ When enabled (the default), `ViewComponent::Base` is patched after initializers 
 ### Initializer
 
 ```ruby
-ViewComponent::Props.configure do |config|
+ViewComponentProps.configure do |config|
   config.reject_undefined_props = true
 
   config.register_caster(:slug) do |value|
@@ -149,14 +166,14 @@ When `reject_undefined_props` is `true`, every component rejects unknown prop ke
 Auto-install runs on require when `configuration.auto_include` is `true` (the default). Because it is read at require time, you must configure it **before** requiring the gem for it to have any effect:
 
 ```ruby
-require "view_component/props/configuration"
-ViewComponent::Props.configure { |config| config.auto_include = false }
+require "view_component_props/configuration"
+ViewComponentProps.configure { |config| config.auto_include = false }
 
-require "view_component/props"
-ViewComponent::Props.install!
+require "view_component_props"
+ViewComponentProps.install!
 ```
 
-Configuring `auto_include` _after_ `require "view_component/props"` cannot reverse the install that already happened. Note this `configuration.auto_include` switch is consulted only outside Rails; in Rails the equivalent switch is `config.view_component_props.auto_include`, handled by the Railtie.
+Configuring `auto_include` _after_ `require "view_component_props"` cannot reverse the install that already happened. Note this `configuration.auto_include` switch is consulted only outside Rails; in Rails the equivalent switch is `config.view_component_props.auto_include`, handled by the Railtie.
 
 ## Development
 

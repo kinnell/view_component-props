@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "lib/view_component/props/version"
+require_relative "lib/view_component_props/version"
 
 Gem::Specification.new do |spec|
   spec.name = "view_component-props"
-  spec.version = ViewComponent::Props::VERSION
+  spec.version = ViewComponentProps::VERSION
   spec.platform = Gem::Platform::RUBY
   spec.authors = ["Kinnell Shah"]
   spec.email = ["kinnell@gmail.com"]

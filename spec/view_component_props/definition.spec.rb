@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe ViewComponent::Props::Definition do
+RSpec.describe ViewComponentProps::Definition do
   let(:component_name) { "TestComponent" }
 
   ################################################################################
@@ -210,7 +210,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "raises a RequiredPropError" do
           expect {
             definition.call({})
-          }.to raise_error(ViewComponent::Props::RequiredPropError, %r{Required prop :title for TestComponent cannot be nil})
+          }.to raise_error(ViewComponentProps::RequiredPropError, %r{Required prop :title for TestComponent cannot be nil})
         end
       end
 
@@ -220,7 +220,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "raises a RequiredPropError" do
           expect {
             definition.call({ title: nil })
-          }.to raise_error(ViewComponent::Props::RequiredPropError, %r{Required prop :title for TestComponent cannot be nil})
+          }.to raise_error(ViewComponentProps::RequiredPropError, %r{Required prop :title for TestComponent cannot be nil})
         end
       end
 
@@ -256,7 +256,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "raises a RequiredPropError (required wins over a nil fallback)" do
           expect {
             definition.call({ title: nil })
-          }.to raise_error(ViewComponent::Props::RequiredPropError, %r{Required prop :title for TestComponent cannot be nil})
+          }.to raise_error(ViewComponentProps::RequiredPropError, %r{Required prop :title for TestComponent cannot be nil})
         end
       end
 
@@ -266,7 +266,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "raises a RequiredPropError after casting" do
           expect {
             definition.call({ flag: "" })
-          }.to raise_error(ViewComponent::Props::RequiredPropError, %r{Required prop :flag for TestComponent cannot be nil})
+          }.to raise_error(ViewComponentProps::RequiredPropError, %r{Required prop :flag for TestComponent cannot be nil})
         end
       end
 
@@ -276,7 +276,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "raises a RequiredPropError after casting" do
           expect {
             definition.call({ flag: "present" })
-          }.to raise_error(ViewComponent::Props::RequiredPropError, %r{Required prop :flag for TestComponent cannot be nil})
+          }.to raise_error(ViewComponentProps::RequiredPropError, %r{Required prop :flag for TestComponent cannot be nil})
         end
       end
     end
@@ -497,7 +497,7 @@ RSpec.describe ViewComponent::Props::Definition do
         let(:output) { definition.call({ label: "abc" }) }
 
         before do
-          ViewComponent::Props.configure { |config| config.register_caster(:reversed) { |value| value.to_s.reverse } }
+          ViewComponentProps.configure { |config| config.register_caster(:reversed) { |value| value.to_s.reverse } }
         end
 
         it "dispatches to the registered caster" do
@@ -511,7 +511,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "wraps the error with prop and component context" do
           expect {
             definition.call({ count: "abc" })
-          }.to raise_error(ViewComponent::Props::CastError, %r{Prop :count for TestComponent could not be cast to :integer \(got "abc"\)})
+          }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to :integer \(got "abc"\)})
         end
       end
 
@@ -521,7 +521,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "wraps it as a CastError" do
           expect {
             definition.call({ config: "nope" })
-          }.to raise_error(ViewComponent::Props::CastError, %r{Prop :config for TestComponent could not be cast to :hash})
+          }.to raise_error(ViewComponentProps::CastError, %r{Prop :config for TestComponent could not be cast to :hash})
         end
       end
 
@@ -531,7 +531,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "wraps it as a CastError" do
           expect {
             definition.call({ count: Float::INFINITY })
-          }.to raise_error(ViewComponent::Props::CastError, %r{Prop :count for TestComponent could not be cast to :integer})
+          }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to :integer})
         end
       end
 
@@ -541,7 +541,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "wraps it as a CastError describing the callable" do
           expect {
             definition.call({ count: "anything" })
-          }.to raise_error(ViewComponent::Props::CastError, %r{Prop :count for TestComponent could not be cast to callable})
+          }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to callable})
         end
       end
 
@@ -558,7 +558,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "labels the cast as a generic callable in the CastError" do
           expect {
             definition.call({ count: "anything" })
-          }.to raise_error(ViewComponent::Props::CastError, %r{Prop :count for TestComponent could not be cast to callable \(})
+          }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to callable \(})
         end
       end
 
@@ -577,31 +577,31 @@ RSpec.describe ViewComponent::Props::Definition do
     ################################################################################
 
     describe "Cast Error Propagation" do
-      context "when a registered caster raises a ViewComponent::Props::Error" do
+      context "when a registered caster raises a ViewComponentProps::Error" do
         let(:definition) { described_class.new(:label, { cast: :strict_label }, component: component_name) }
 
         before do
-          ViewComponent::Props.configure do |config|
-            config.register_caster(:strict_label) { |_| raise ViewComponent::Props::CastError, "strict rejection" }
+          ViewComponentProps.configure do |config|
+            config.register_caster(:strict_label) { |_| raise ViewComponentProps::CastError, "strict rejection" }
           end
         end
 
         it "raises CastError with the original message" do
           expect {
             definition.call({ label: "abc" })
-          }.to raise_error(ViewComponent::Props::CastError, "strict rejection")
+          }.to raise_error(ViewComponentProps::CastError, "strict rejection")
         end
       end
 
-      context "when a callable cast raises a ViewComponent::Props::Error" do
+      context "when a callable cast raises a ViewComponentProps::Error" do
         let(:definition) do
-          described_class.new(:label, { cast: ->(_) { raise ViewComponent::Props::CastError, "callable rejection" } }, component: component_name)
+          described_class.new(:label, { cast: ->(_) { raise ViewComponentProps::CastError, "callable rejection" } }, component: component_name)
         end
 
         it "raises CastError with the original message" do
           expect {
             definition.call({ label: "abc" })
-          }.to raise_error(ViewComponent::Props::CastError, "callable rejection")
+          }.to raise_error(ViewComponentProps::CastError, "callable rejection")
         end
       end
     end
@@ -626,7 +626,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "raises an InvalidEnumValueError" do
           expect {
             definition.call({ size: :huge })
-          }.to raise_error(ViewComponent::Props::InvalidEnumValueError, %r{Prop :size for TestComponent must be one of})
+          }.to raise_error(ViewComponentProps::InvalidEnumValueError, %r{Prop :size for TestComponent must be one of})
         end
       end
 
@@ -662,7 +662,7 @@ RSpec.describe ViewComponent::Props::Definition do
         it "raises a ValidationFailedError" do
           expect {
             definition.call({ amount: -1 })
-          }.to raise_error(ViewComponent::Props::ValidationFailedError, %r{Prop :amount for TestComponent failed validation})
+          }.to raise_error(ViewComponentProps::ValidationFailedError, %r{Prop :amount for TestComponent failed validation})
         end
       end
 
@@ -685,13 +685,13 @@ RSpec.describe ViewComponent::Props::Definition do
     it "raises an UnknownOptionError for unknown options" do
       expect {
         described_class.new(:title, { bogus: true }, component: component_name)
-      }.to raise_error(ViewComponent::Props::UnknownOptionError, %r{Unknown options for prop :title})
+      }.to raise_error(ViewComponentProps::UnknownOptionError, %r{Unknown options for prop :title})
     end
 
     it "raises an UnknownCastError for cast: nil" do
       expect {
         described_class.new(:title, { cast: nil }, component: component_name)
-      }.to raise_error(ViewComponent::Props::UnknownCastError, %r{Cast type for prop :title cannot be nil})
+      }.to raise_error(ViewComponentProps::UnknownCastError, %r{Cast type for prop :title cannot be nil})
     end
 
     it "accepts an unregistered symbol cast at definition time" do
@@ -705,13 +705,13 @@ RSpec.describe ViewComponent::Props::Definition do
 
       expect {
         definition.call({ title: "value" })
-      }.to raise_error(ViewComponent::Props::CastError, %r{Prop :title for TestComponent could not be cast to :nope})
+      }.to raise_error(ViewComponentProps::CastError, %r{Prop :title for TestComponent could not be cast to :nope})
     end
 
     it "raises an UnknownCastError for a non-symbol, non-callable cast type" do
       expect {
         described_class.new(:title, { cast: 42 }, component: component_name)
-      }.to raise_error(ViewComponent::Props::UnknownCastError, %r{must be a Symbol, String, or callable})
+      }.to raise_error(ViewComponentProps::UnknownCastError, %r{must be a Symbol, String, or callable})
     end
 
     it "accepts a callable cast without raising" do

@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require "bundler/setup"
-require "view_component/props"
+require "view_component_props"
 
 require "irb"
 IRB.start(__FILE__)
