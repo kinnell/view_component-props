@@ -2,6 +2,20 @@
 set -euo pipefail
 
 ################################################################################
+## Project Configuration
+################################################################################
+
+readonly GEM_NAME="view_component-props"
+readonly GEMSPEC="${GEM_NAME}.gemspec"
+readonly VERSION_FILE="lib/view_component_props/version.rb"
+readonly CHANGELOG_FILE="CHANGELOG.md"
+readonly UNRELEASED_HEADER="## [X.X.X] - YYYY-MM-DD"
+readonly PKG_DIR="pkg"
+readonly CI_COMMAND=(bin/ci --quiet)
+readonly RELEASE_TAG_PREFIX="v"
+readonly VERSION_COMMIT_MESSAGE="Bump version to"
+
+################################################################################
 ## Constants
 ################################################################################
 
@@ -18,13 +32,6 @@ readonly YELLOW='\033[0;33m'
 readonly BLUE='\033[0;34m'
 readonly INDIGO='\033[38;5;141m'
 readonly BRIGHT_WHITE='\033[0;97m'
-
-readonly GEMSPEC=(*.gemspec)
-readonly GEM_NAME="${GEMSPEC%.gemspec}"
-readonly LIB_NAME="${GEM_NAME//-/_}"
-readonly VERSION_FILE="lib/${LIB_NAME}/version.rb"
-readonly CHANGELOG_FILE="CHANGELOG.md"
-readonly UNRELEASED_HEADER="## [X.X.X] - YYYY-MM-DD"
 
 DRY_RUN="false"
 
@@ -121,7 +128,7 @@ function update_changelog() {
 }
 
 function run_ci() {
-  bin/ci --quiet
+  "${CI_COMMAND[@]}"
 }
 
 function commit_and_push() {
@@ -134,14 +141,14 @@ function commit_and_push() {
   fi
 
   git add "${VERSION_FILE}" "${CHANGELOG_FILE}"
-  git commit -m "Bump version to ${next_version}"
+  git commit -m "${VERSION_COMMIT_MESSAGE} ${next_version}"
   git push
   print_success "$message"
 }
 
 function tag_release() {
   local next_version="$1"
-  local tag="v${next_version}"
+  local tag="${RELEASE_TAG_PREFIX}${next_version}"
   local message="Created and pushed tag $(fmt_version "${next_version}")"
 
   if [[ "$DRY_RUN" == "true" ]]; then
@@ -156,7 +163,7 @@ function tag_release() {
 
 function build_and_publish_gem() {
   local next_version="$1"
-  local gem_file="${GEM_NAME}-${next_version}.gem"
+  local gem_file="${PKG_DIR}/${GEM_NAME}-${next_version}.gem"
   local message="Built and published $(fmt_gem_name "${GEM_NAME}") $(fmt_version "${next_version}") to RubyGems"
 
   if [[ "$DRY_RUN" == "true" ]]; then
@@ -164,9 +171,9 @@ function build_and_publish_gem() {
     return
   fi
 
-  gem build "${GEMSPEC}"
+  mkdir -p "${PKG_DIR}"
+  gem build "${GEMSPEC}" --output "${gem_file}"
   gem push "${gem_file}"
-  rm -f "${gem_file}"
   print_success "$message"
 }
 
