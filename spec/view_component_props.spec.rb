@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-RSpec.describe ViewComponent::Props do
+RSpec.describe ViewComponentProps do
   describe ".configuration" do
     it "returns a Configuration instance" do
-      expect(described_class.configuration).to be_a(ViewComponent::Props::Configuration)
+      expect(described_class.configuration).to be_a(ViewComponentProps::Configuration)
     end
 
     it "memoizes the Configuration instance" do
@@ -21,7 +21,7 @@ RSpec.describe ViewComponent::Props do
 
   describe ".configure" do
     it "yields the Configuration instance" do
-      expect { |block| described_class.configure(&block) }.to yield_with_args(ViewComponent::Props::Configuration)
+      expect { |block| described_class.configure(&block) }.to yield_with_args(ViewComponentProps::Configuration)
     end
   end
 
@@ -33,7 +33,7 @@ RSpec.describe ViewComponent::Props do
     end
 
     it "registers a caster on the global registry" do
-      expect(ViewComponent::Props::Casters.fetch(:reversed).call("abc")).to eq("cba")
+      expect(ViewComponentProps::Casters.fetch(:reversed).call("abc")).to eq("cba")
     end
   end
 
@@ -53,7 +53,7 @@ RSpec.describe ViewComponent::Props do
       end
 
       it "clears custom casters from the live registry" do
-        expect(ViewComponent::Props::Casters.known?(:custom_thing)).to be false
+        expect(ViewComponentProps::Casters.known?(:custom_thing)).to be false
       end
     end
   end
@@ -64,14 +64,14 @@ RSpec.describe ViewComponent::Props do
 
   describe "Non-Rails Install" do
     it "includes Definable into ViewComponent::Base when the gem loads outside Rails" do
-      expect(ViewComponent::Base.include?(ViewComponent::Props::Definable)).to be true
+      expect(ViewComponent::Base.include?(ViewComponentProps::Definable)).to be true
     end
 
     context "when auto_include is disabled after require time" do
       before { described_class.configure { |config| config.auto_include = false } }
 
       it "remains installed" do
-        expect(ViewComponent::Base.include?(ViewComponent::Props::Definable)).to be true
+        expect(ViewComponent::Base.include?(ViewComponentProps::Definable)).to be true
       end
     end
   end
@@ -93,7 +93,7 @@ RSpec.describe ViewComponent::Props do
       before { described_class.install!(fake_base) }
 
       it "includes Definable into the target" do
-        expect(fake_base.include?(ViewComponent::Props::Definable)).to be true
+        expect(fake_base.include?(ViewComponentProps::Definable)).to be true
       end
 
       context "when the .prop DSL is used" do
@@ -122,7 +122,7 @@ RSpec.describe ViewComponent::Props do
       end
 
       it "is idempotent" do
-        expect(fake_base.ancestors.count(ViewComponent::Props::Definable)).to eq(1)
+        expect(fake_base.ancestors.count(ViewComponentProps::Definable)).to eq(1)
       end
     end
   end

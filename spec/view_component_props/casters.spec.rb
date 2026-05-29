@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-RSpec.describe ViewComponent::Props::Casters do
+RSpec.describe ViewComponentProps::Casters do
   ################################################################################
   ## Custom Caster Registration
   ################################################################################
 
   describe "Custom Caster Registration" do
     def register_caster(...)
-      ViewComponent::Props.configure { |config| config.register_caster(...) }
+      ViewComponentProps.configure { |config| config.register_caster(...) }
     end
 
     context "when called with a block" do
@@ -23,7 +23,7 @@ RSpec.describe ViewComponent::Props::Casters do
     context "when called without a block" do
       it "raises an ArgumentError" do
         expect {
-          ViewComponent::Props.configure { |config| config.register_caster(:noop) }
+          ViewComponentProps.configure { |config| config.register_caster(:noop) }
         }.to raise_error(ArgumentError, %r{register_caster requires a block})
       end
     end
@@ -449,7 +449,7 @@ RSpec.describe ViewComponent::Props::Casters do
 
     context "when a custom caster is registered through configuration" do
       before do
-        ViewComponent::Props.configure { |config| config.register_caster(:custom_thing) { |value| value } }
+        ViewComponentProps.configure { |config| config.register_caster(:custom_thing) { |value| value } }
         described_class.registry[:custom_thing] = ->(_) { :mutated }
         described_class.reset!
       end
@@ -463,8 +463,8 @@ RSpec.describe ViewComponent::Props::Casters do
 
     context "after configuration is reset" do
       before do
-        ViewComponent::Props.configure { |config| config.register_caster(:custom_thing) { |value| value } }
-        ViewComponent::Props.reset_configuration!
+        ViewComponentProps.configure { |config| config.register_caster(:custom_thing) { |value| value } }
+        ViewComponentProps.reset_configuration!
       end
 
       it "does not restore custom casters from the previous configuration" do

@@ -121,7 +121,7 @@ RSpec.describe ViewComponent::Base do
       it "raises a RequiredPropError" do
         expect {
           required_component.new({})
-        }.to raise_error(ViewComponent::Props::RequiredPropError, %r{Required prop :title for TestComponent cannot be nil})
+        }.to raise_error(ViewComponentProps::RequiredPropError, %r{Required prop :title for TestComponent cannot be nil})
       end
     end
   end

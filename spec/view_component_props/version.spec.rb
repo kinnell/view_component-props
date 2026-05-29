@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe ViewComponent::Props do
+RSpec.describe ViewComponentProps do
   describe "VERSION" do
     it "is defined" do
       expect(described_class::VERSION).not_to be_nil

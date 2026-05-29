@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require "active_support/core_ext/time/zones"
-require "view_component/props"
+require "view_component_props"
 
-ViewComponent::Props.install! unless ViewComponent::Base.include?(ViewComponent::Props::Definable)
+ViewComponentProps.install! unless ViewComponent::Base.include?(ViewComponentProps::Definable)
 
 Time.zone = "UTC"
 
@@ -13,6 +13,6 @@ RSpec.configure do |config|
   config.pattern = "**/*.spec.rb"
 
   config.before do
-    ViewComponent::Props.reset_configuration!
+    ViewComponentProps.reset_configuration!
   end
 end

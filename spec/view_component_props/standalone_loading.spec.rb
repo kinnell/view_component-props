@@ -8,7 +8,7 @@ RSpec.describe "Standalone Loading" do
   describe "Definable Standalone Require" do
     let(:output) do
       run_in_subprocess(<<~RUBY)
-        require "view_component/props/definable"
+        require "view_component_props/definable"
         puts "loaded"
       RUBY
     end
@@ -21,8 +21,8 @@ RSpec.describe "Standalone Loading" do
   describe "Configuration Standalone Require" do
     let(:output) do
       run_in_subprocess(<<~RUBY)
-        require "view_component/props/configuration"
-        puts ViewComponent::Props::Configuration.new.custom_casters.class
+        require "view_component_props/configuration"
+        puts ViewComponentProps::Configuration.new.custom_casters.class
       RUBY
     end
 
@@ -34,10 +34,10 @@ RSpec.describe "Standalone Loading" do
   describe "Pre-Require Caster Configuration" do
     let(:output) do
       run_in_subprocess(<<~RUBY)
-        require "view_component/props/configuration"
-        ViewComponent::Props.configure { |config| config.register_caster(:preloaded) { |value| value.to_s.upcase } }
-        require "view_component/props/casters"
-        puts ViewComponent::Props::Casters.fetch(:preloaded).call("abc")
+        require "view_component_props/configuration"
+        ViewComponentProps.configure { |config| config.register_caster(:preloaded) { |value| value.to_s.upcase } }
+        require "view_component_props/casters"
+        puts ViewComponentProps::Casters.fetch(:preloaded).call("abc")
       RUBY
     end
 

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-RSpec.describe ViewComponent::Props::Definable do
+RSpec.describe ViewComponentProps::Definable do
   let(:test_model) do
     Class.new do
-      include ViewComponent::Props::Definable
+      include ViewComponentProps::Definable
 
       def self.name
         "TestComponent"
@@ -50,7 +50,7 @@ RSpec.describe ViewComponent::Props::Definable do
     it "raises an UnknownOptionError for unknown options" do
       expect {
         test_model.class_eval { prop :title, bogus: true }
-      }.to raise_error(ViewComponent::Props::UnknownOptionError, %r{Unknown options for prop :title})
+      }.to raise_error(ViewComponentProps::UnknownOptionError, %r{Unknown options for prop :title})
     end
   end
 
@@ -80,7 +80,7 @@ RSpec.describe ViewComponent::Props::Definable do
       it "raises an UnknownPropsError when an undeclared key is supplied" do
         expect {
           test_model.new(title: "Hello", unknown: "extra")
-        }.to raise_error(ViewComponent::Props::UnknownPropsError, %r{Unknown props for TestComponent: \[:unknown\]})
+        }.to raise_error(ViewComponentProps::UnknownPropsError, %r{Unknown props for TestComponent: \[:unknown\]})
       end
 
       context "when all keys are declared" do
@@ -116,7 +116,7 @@ RSpec.describe ViewComponent::Props::Definable do
   describe ".permit_undefined_props!" do
     context "when configuration enables :reject_undefined_props but the class permits them" do
       before do
-        ViewComponent::Props.configure { |config| config.reject_undefined_props = true }
+        ViewComponentProps.configure { |config| config.reject_undefined_props = true }
         test_model.class_eval do
           permit_undefined_props!
           prop :title
@@ -141,7 +141,7 @@ RSpec.describe ViewComponent::Props::Definable do
 
   describe "Configuration-Driven :reject_undefined_props" do
     before do
-      ViewComponent::Props.configure { |config| config.reject_undefined_props = true }
+      ViewComponentProps.configure { |config| config.reject_undefined_props = true }
       test_model.class_eval { prop :title }
     end
 
@@ -149,7 +149,7 @@ RSpec.describe ViewComponent::Props::Definable do
       it "raises an UnknownPropsError for undeclared keys" do
         expect {
           test_model.new(title: "Hello", unknown: "extra")
-        }.to raise_error(ViewComponent::Props::UnknownPropsError)
+        }.to raise_error(ViewComponentProps::UnknownPropsError)
       end
     end
 
@@ -248,7 +248,7 @@ RSpec.describe ViewComponent::Props::Definable do
     describe "String-Keyed Input with Defaults, Fallbacks, and Required" do
       let(:resolving_model) do
         Class.new do
-          include ViewComponent::Props::Definable
+          include ViewComponentProps::Definable
 
           def self.name
             "TestComponent"
@@ -298,7 +298,7 @@ RSpec.describe ViewComponent::Props::Definable do
     describe "Instance-Aware Callables" do
       let(:instance_aware_model) do
         Class.new do
-          include ViewComponent::Props::Definable
+          include ViewComponentProps::Definable
 
           def self.name
             "TestComponent"
@@ -381,7 +381,7 @@ RSpec.describe ViewComponent::Props::Definable do
   describe "Subclass Inheritance" do
     let(:parent_model) do
       Class.new do
-        include ViewComponent::Props::Definable
+        include ViewComponentProps::Definable
 
         def self.name
           "ParentComponent"
