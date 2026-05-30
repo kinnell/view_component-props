@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [X.X.X] - YYYY-MM-DD
 
-## [0.0.2] - 2026-05-29
+### Added
+
+- Dash-named entry file (`lib/view_component-props.rb`) so Bundler's default auto-require works for the published `view_component-props` gem name without a `require:` option
+
+### Fixed
+
+- `ViewComponentProps.install!` now prepends its initializer instead of redefining `ViewComponent::Base#initialize`. This keeps the native initializer in the ancestor chain, so `super()` resolves to `ViewComponent::Base#initialize` rather than falling through to `ActionView::Base#initialize` and raising `ArgumentError` when a component is instantiated.
+
+### Documentation
+
+- Expanded the README casters section into a reference table and documented the nil-handling semantics (a `nil` value is never passed to a caster)
 
 ## [0.0.1] - 2026-05-29
 
