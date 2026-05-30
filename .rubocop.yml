@@ -37,6 +37,10 @@ Metrics/MethodLength:
 Metrics/ModuleLength:
   Enabled: false
 
+Naming/FileName:
+  Exclude:
+    - lib/view_component-props.rb
+
 Naming/PredicateMethod:
   Enabled: false
 
