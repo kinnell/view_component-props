@@ -95,6 +95,28 @@ RSpec.describe ViewComponent::Base do
   end
 
   ################################################################################
+  ## Prepended Initializer
+  ################################################################################
+
+  describe "Prepended Initializer" do
+    let(:ancestors) { component_class.ancestors }
+
+    it "registers props via the .prop DSL on a ViewComponent::Base subclass" do
+      expect(component_class.prop_definitions).to include(:title)
+    end
+
+    it "prepends ViewComponentProps::Initializer immediately before ViewComponent::Base so super() resolves there" do
+      expect(ancestors[ancestors.index(ViewComponentProps::Initializer) + 1]).to eq(described_class)
+    end
+
+    context "when a subclass is instantiated without arguments" do
+      it "does not raise from falling through to ActionView::Base#initialize" do
+        expect { component_class.new }.not_to raise_error
+      end
+    end
+  end
+
+  ################################################################################
   ## Required Props
   ################################################################################
 

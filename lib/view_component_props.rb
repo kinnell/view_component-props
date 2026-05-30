@@ -12,18 +12,20 @@ require_relative "view_component_props/definable"
 require_relative "view_component_props/version"
 
 module ViewComponentProps
+  module Initializer
+    def initialize(props = {})
+      super()
+      setup_props_for(props)
+      after_initialize
+    end
+  end
+
   class << self
     def install!(target = ViewComponent::Base)
       return if target.include?(Definable)
 
       target.include(Definable)
-      target.class_eval do
-        def initialize(props = {})
-          super()
-          setup_props_for(props)
-          after_initialize
-        end
-      end
+      target.prepend(Initializer)
     end
   end
 end

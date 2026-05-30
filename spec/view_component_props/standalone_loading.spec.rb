@@ -5,6 +5,25 @@ RSpec.describe "Standalone Loading" do
     IO.popen(["bundle", "exec", "ruby", "-Ilib", "-e", script], err: %i[child out], &:read)
   end
 
+  describe "Dash-Named Entry Require" do
+    let(:output) do
+      run_in_subprocess(<<~RUBY)
+        require "view_component-props"
+        ViewComponentProps.install! unless ViewComponent::Base.include?(ViewComponentProps::Definable)
+        puts ViewComponentProps::VERSION
+        puts ViewComponent::Base.include?(ViewComponentProps::Definable)
+      RUBY
+    end
+
+    it "loads the gem through the dash-named entry shim" do
+      expect(output).to include(ViewComponentProps::VERSION)
+    end
+
+    it "installs Definable into ViewComponent::Base" do
+      expect(output).to include("true")
+    end
+  end
+
   describe "Definable Standalone Require" do
     let(:output) do
       run_in_subprocess(<<~RUBY)
