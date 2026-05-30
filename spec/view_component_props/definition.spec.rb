@@ -369,6 +369,38 @@ RSpec.describe ViewComponentProps::Definition do
         end
       end
 
+      context "when the value is nil with cast: :string" do
+        let(:definition) { described_class.new(:label, { cast: :string }, component: component_name) }
+        let(:output) { definition.call({ label: nil }) }
+
+        it "stays nil rather than being coerced to an empty string" do
+          expect(output).to be_nil
+        end
+      end
+
+      context "when the value is nil for any built-in cast" do
+        ViewComponentProps::Casters::Base.base_casters.each_key do |cast_type|
+          context "with cast: :#{cast_type}" do
+            let(:definition) { described_class.new(:value, { cast: cast_type.to_sym }, component: component_name) }
+            let(:output) { definition.call({ value: nil }) }
+
+            it "passes nil through unchanged" do
+              expect(output).to be_nil
+            end
+          end
+        end
+      end
+
+      context "when the value is nil and the cast is a callable" do
+        let(:caster) { ->(value) { value.to_s } }
+        let(:definition) { described_class.new(:label, { cast: caster }, component: component_name) }
+
+        it "never invokes the caster" do
+          expect(caster).not_to receive(:call)
+          definition.call({ label: nil })
+        end
+      end
+
       context "when a default is supplied with a cast" do
         let(:definition) { described_class.new(:mode, { cast: :symbol, default: "dark" }, component: component_name) }
         let(:output) { definition.call({}) }

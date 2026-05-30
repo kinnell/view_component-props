@@ -89,9 +89,30 @@ end
 
 ### Casters
 
-Built-in casters: `:integer`, `:float`, `:string`, `:symbol`, `:boolean`, `:array`, `:hash`, `:decimal`, `:date`, `:datetime`.
+Built-in casters:
 
-A `nil` value is never cast and stays `nil`. Use `default:` or `fallback:` when you need a value for a missing or `nil` prop.
+| Cast         | Coerces to                  | Notes                                                                       |
+| ------------ | --------------------------- | --------------------------------------------------------------------------- |
+| `:integer`   | `Integer`                   | Via `Integer(value)`; raises `CastError` on non-numeric input.              |
+| `:float`     | `Float`                     | Via `Float(value)`; raises `CastError` on non-numeric input.                |
+| `:string`    | `String`                    | Via `value.to_s`.                                                           |
+| `:symbol`    | `Symbol`                    | Via `value.to_sym`.                                                         |
+| `:boolean`   | `true` / `false`            | Uses `ActiveModel::Type::Boolean`, so `"0"`, `"false"`, `""` become `false`. |
+| `:array`     | `Array`                     | Via `Array(value)`, wrapping scalars in a one-element array.                |
+| `:hash`      | `Hash`                      | Returns hashes unchanged; otherwise calls `value.to_h`.                      |
+| `:decimal`   | `BigDecimal`                | Returns `BigDecimal` values unchanged; otherwise `BigDecimal(value.to_s)`.   |
+| `:date`      | `Date`                      | Returns `Date` values unchanged; otherwise `Date.parse(value.to_s)`.         |
+| `:datetime`  | `Time` / `ActiveSupport::TimeWithZone` | Returns `Time`/`DateTime` unchanged; otherwise parses via `Time.zone` (or `Time.parse` when no zone). |
+
+#### Nil handling
+
+A `nil` value is **never** passed to a caster — casting is short-circuited before the caster runs, so `nil` stays `nil`. This means casters don't need to be nil-safe, and a `nil` prop is never coerced into a placeholder like `""`, `0`, or `false`. Resolution order is:
+
+1. The key's value (or `default:` when the key is missing) is resolved.
+2. If that value is `nil` and a `fallback:` is defined, the fallback is resolved.
+3. Only a non-`nil` result is handed to the caster; a `nil` result passes through untouched (then triggers `required:` if set).
+
+Use `default:` or `fallback:` when you need a concrete value for a missing or `nil` prop. Note that fallbacks are resolved *before* casting, so a `fallback:` value is cast like any other value.
 
 Register custom casters in the configuration block:
 
