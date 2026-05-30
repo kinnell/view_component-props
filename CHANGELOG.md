@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [X.X.X] - YYYY-MM-DD
 
+## [0.0.3] - 2026-05-30
+
 ### Added
 
 - Dash-named entry file (`lib/view_component-props.rb`) so Bundler's default auto-require works for the published `view_component-props` gem name without a `require:` option
