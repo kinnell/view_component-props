@@ -286,320 +286,377 @@ RSpec.describe ViewComponentProps::Definition do
     ################################################################################
 
     describe "Cast Type Application" do
-      context "with cast: :integer" do
-        let(:definition) { described_class.new(:count, { cast: :integer }, component: component_name) }
-        let(:output) { definition.call({ count: "42" }) }
+      describe "Built-In Cast Types" do
+        context "with cast: :integer" do
+          let(:definition) { described_class.new(:count, { cast: :integer }, component: component_name) }
+          let(:output) { definition.call({ count: "42" }) }
 
-        it "casts the value to an integer" do
-          expect(output).to eq(42)
-        end
-      end
-
-      context "with cast: 'integer'" do
-        let(:definition) { described_class.new(:count, { cast: "integer" }, component: component_name) }
-        let(:output) { definition.call({ count: "42" }) }
-
-        it "casts the value to an integer" do
-          expect(output).to eq(42)
-        end
-      end
-
-      context "with cast: :float" do
-        let(:definition) { described_class.new(:rate, { cast: :float }, component: component_name) }
-        let(:output) { definition.call({ rate: "3.14" }) }
-
-        it "casts the value to a float" do
-          expect(output).to eq(3.14)
-        end
-      end
-
-      context "with cast: :string" do
-        let(:definition) { described_class.new(:label, { cast: :string }, component: component_name) }
-        let(:output) { definition.call({ label: 123 }) }
-
-        it "casts the value to a string" do
-          expect(output).to eq("123")
-        end
-      end
-
-      context "with cast: :symbol" do
-        let(:definition) { described_class.new(:mode, { cast: :symbol }, component: component_name) }
-        let(:output) { definition.call({ mode: "dark" }) }
-
-        it "casts the value to a symbol" do
-          expect(output).to eq(:dark)
-        end
-      end
-
-      context "with cast: :boolean" do
-        let(:definition) { described_class.new(:active, { cast: :boolean }, component: component_name) }
-
-        context "when the value is truthy" do
-          let(:output) { definition.call({ active: "1" }) }
-
-          it "casts to true" do
-            expect(output).to be true
+          it "casts the value to an integer" do
+            expect(output).to eq(42)
           end
         end
 
-        context "when the value is falsy" do
-          let(:output) { definition.call({ active: "0" }) }
+        context "with cast: :float" do
+          let(:definition) { described_class.new(:rate, { cast: :float }, component: component_name) }
+          let(:output) { definition.call({ rate: "3.14" }) }
 
-          it "casts to false" do
-            expect(output).to be false
+          it "casts the value to a float" do
+            expect(output).to eq(3.14)
           end
         end
-      end
 
-      context "with cast: :array" do
-        let(:definition) { described_class.new(:items, { cast: :array }, component: component_name) }
-        let(:output) { definition.call({ items: "solo" }) }
+        context "with cast: :string" do
+          let(:definition) { described_class.new(:label, { cast: :string }, component: component_name) }
+          let(:output) { definition.call({ label: 123 }) }
 
-        it "wraps the value in an array" do
-          expect(output).to eq(["solo"])
+          it "casts the value to a string" do
+            expect(output).to eq("123")
+          end
         end
-      end
 
-      context "when the value is nil" do
-        let(:definition) { described_class.new(:count, { cast: :integer }, component: component_name) }
-        let(:output) { definition.call({ count: nil }) }
+        context "with cast: :symbol" do
+          let(:definition) { described_class.new(:mode, { cast: :symbol }, component: component_name) }
+          let(:output) { definition.call({ mode: "dark" }) }
 
-        it "returns nil without casting" do
-          expect(output).to be_nil
+          it "casts the value to a symbol" do
+            expect(output).to eq(:dark)
+          end
         end
-      end
 
-      context "when the value is nil with cast: :string" do
-        let(:definition) { described_class.new(:label, { cast: :string }, component: component_name) }
-        let(:output) { definition.call({ label: nil }) }
+        context "with cast: :boolean" do
+          let(:definition) { described_class.new(:active, { cast: :boolean }, component: component_name) }
 
-        it "stays nil rather than being coerced to an empty string" do
-          expect(output).to be_nil
+          context "when the value is truthy" do
+            let(:output) { definition.call({ active: "1" }) }
+
+            it "casts to true" do
+              expect(output).to be true
+            end
+          end
+
+          context "when the value is falsy" do
+            let(:output) { definition.call({ active: "0" }) }
+
+            it "casts to false" do
+              expect(output).to be false
+            end
+          end
         end
-      end
 
-      context "when the value is nil for any built-in cast" do
-        ViewComponentProps::Casters::Base.base_casters.each_key do |cast_type|
-          context "with cast: :#{cast_type}" do
-            let(:definition) { described_class.new(:value, { cast: cast_type.to_sym }, component: component_name) }
-            let(:output) { definition.call({ value: nil }) }
+        context "with cast: :array" do
+          let(:definition) { described_class.new(:items, { cast: :array }, component: component_name) }
+          let(:output) { definition.call({ items: "solo" }) }
 
-            it "passes nil through unchanged" do
-              expect(output).to be_nil
+          it "wraps the value in an array" do
+            expect(output).to eq(["solo"])
+          end
+        end
+
+        context "with cast: :hash" do
+          let(:definition) { described_class.new(:config, { cast: :hash }, component: component_name) }
+
+          context "when the value is already a hash" do
+            let(:output) { definition.call({ config: { a: 1 } }) }
+
+            it "returns the hash unchanged (with indifferent access)" do
+              expect(output).to eq({ a: 1 }.with_indifferent_access)
+            end
+          end
+
+          context "when the value is an array of pairs" do
+            let(:output) { definition.call({ config: [[:a, 1]] }) }
+
+            it "converts it to a hash" do
+              expect(output).to eq({ a: 1 })
+            end
+          end
+        end
+
+        context "with cast: :decimal" do
+          let(:definition) { described_class.new(:price, { cast: :decimal }, component: component_name) }
+
+          context "when the value is a numeric string" do
+            let(:output) { definition.call({ price: "3.50" }) }
+
+            it "parses it to a BigDecimal" do
+              expect(output).to eq(BigDecimal("3.50"))
+            end
+          end
+
+          context "when the value is already a BigDecimal" do
+            let(:value) { BigDecimal("9.99") }
+            let(:output) { definition.call({ price: value }) }
+
+            it "returns it untouched" do
+              expect(output).to equal(value)
+            end
+          end
+        end
+
+        context "with cast: :date" do
+          let(:definition) { described_class.new(:starts_on, { cast: :date }, component: component_name) }
+
+          context "when the value is an ISO-8601 date string" do
+            let(:output) { definition.call({ starts_on: "2026-05-20" }) }
+
+            it "parses it to a Date" do
+              expect(output).to eq(Date.new(2026, 5, 20))
+            end
+          end
+
+          context "when the value is already a Date" do
+            let(:date) { Date.new(2026, 1, 1) }
+            let(:output) { definition.call({ starts_on: date }) }
+
+            it "returns it untouched" do
+              expect(output).to equal(date)
+            end
+          end
+        end
+
+        context "with cast: :datetime" do
+          let(:definition) { described_class.new(:starts_at, { cast: :datetime }, component: component_name) }
+
+          context "when the value is an ISO-8601 datetime string" do
+            let(:output) { definition.call({ starts_at: "2026-05-20T12:00:00Z" }) }
+
+            it "parses it to a Time-like value" do
+              expect(output).to be_a(ActiveSupport::TimeWithZone).or be_a(Time)
+            end
+
+            it "preserves the year" do
+              expect(output.year).to eq(2026)
+            end
+          end
+
+          context "when the value is already a Time" do
+            let(:time) { Time.zone.local(2026, 5, 20, 12) }
+            let(:output) { definition.call({ starts_at: time }) }
+
+            it "returns it untouched" do
+              expect(output).to equal(time)
             end
           end
         end
       end
 
-      context "when the value is nil and the cast is a callable" do
-        let(:caster) { ->(value) { value.to_s } }
-        let(:definition) { described_class.new(:label, { cast: caster }, component: component_name) }
+      describe "String Cast Type Names" do
+        context "with cast: 'integer'" do
+          let(:definition) { described_class.new(:count, { cast: "integer" }, component: component_name) }
+          let(:output) { definition.call({ count: "42" }) }
 
-        it "never invokes the caster" do
-          expect(caster).not_to receive(:call)
-          definition.call({ label: nil })
-        end
-      end
-
-      context "when a default is supplied with a cast" do
-        let(:definition) { described_class.new(:mode, { cast: :symbol, default: "dark" }, component: component_name) }
-        let(:output) { definition.call({}) }
-
-        it "casts the default value" do
-          expect(output).to eq(:dark)
-        end
-      end
-
-      context "when a fallback is supplied with a cast" do
-        let(:definition) { described_class.new(:mode, { cast: :symbol, fallback: "dark" }, component: component_name) }
-        let(:output) { definition.call({ mode: nil }) }
-
-        it "casts the fallback value" do
-          expect(output).to eq(:dark)
-        end
-      end
-
-      context "with cast: :array and a nil value" do
-        let(:definition) { described_class.new(:items, { cast: :array }, component: component_name) }
-        let(:output) { definition.call({ items: nil }) }
-
-        it "passes nil through without casting" do
-          expect(output).to be_nil
-        end
-      end
-
-      context "with cast: :hash" do
-        let(:definition) { described_class.new(:config, { cast: :hash }, component: component_name) }
-
-        context "when the value is already a hash" do
-          let(:output) { definition.call({ config: { a: 1 } }) }
-
-          it "returns the hash unchanged (with indifferent access)" do
-            expect(output).to eq({ a: 1 }.with_indifferent_access)
-          end
-        end
-
-        context "when the value is an array of pairs" do
-          let(:output) { definition.call({ config: [[:a, 1]] }) }
-
-          it "converts it to a hash" do
-            expect(output).to eq({ a: 1 })
+          it "resolves the string to the matching built-in caster" do
+            expect(output).to eq(42)
           end
         end
       end
 
-      context "with cast: :decimal" do
-        let(:definition) { described_class.new(:price, { cast: :decimal }, component: component_name) }
+      describe "Nil Value Handling" do
+        context "with cast: :integer" do
+          let(:definition) { described_class.new(:value, { cast: :integer }, component: component_name) }
+          let(:output) { definition.call({ value: nil }) }
 
-        context "when the value is a numeric string" do
-          let(:output) { definition.call({ price: "3.50" }) }
-
-          it "parses it to a BigDecimal" do
-            expect(output).to eq(BigDecimal("3.50"))
+          it "returns nil without casting" do
+            expect(output).to be_nil
           end
         end
 
-        context "when the value is already a BigDecimal" do
-          let(:value) { BigDecimal("9.99") }
-          let(:output) { definition.call({ price: value }) }
+        context "with cast: :float" do
+          let(:definition) { described_class.new(:value, { cast: :float }, component: component_name) }
+          let(:output) { definition.call({ value: nil }) }
 
-          it "returns it untouched" do
-            expect(output).to equal(value)
+          it "passes nil through unchanged" do
+            expect(output).to be_nil
+          end
+        end
+
+        context "with cast: :string" do
+          let(:definition) { described_class.new(:value, { cast: :string }, component: component_name) }
+          let(:output) { definition.call({ value: nil }) }
+
+          it "stays nil rather than being coerced to an empty string" do
+            expect(output).to be_nil
+          end
+        end
+
+        context "with cast: :symbol" do
+          let(:definition) { described_class.new(:value, { cast: :symbol }, component: component_name) }
+          let(:output) { definition.call({ value: nil }) }
+
+          it "passes nil through unchanged" do
+            expect(output).to be_nil
+          end
+        end
+
+        context "with cast: :boolean" do
+          let(:definition) { described_class.new(:value, { cast: :boolean }, component: component_name) }
+          let(:output) { definition.call({ value: nil }) }
+
+          it "passes nil through unchanged" do
+            expect(output).to be_nil
+          end
+        end
+
+        context "with cast: :array" do
+          let(:definition) { described_class.new(:value, { cast: :array }, component: component_name) }
+          let(:output) { definition.call({ value: nil }) }
+
+          it "passes nil through unchanged" do
+            expect(output).to be_nil
+          end
+        end
+
+        context "with cast: :hash" do
+          let(:definition) { described_class.new(:value, { cast: :hash }, component: component_name) }
+          let(:output) { definition.call({ value: nil }) }
+
+          it "passes nil through unchanged" do
+            expect(output).to be_nil
+          end
+        end
+
+        context "with cast: :decimal" do
+          let(:definition) { described_class.new(:value, { cast: :decimal }, component: component_name) }
+          let(:output) { definition.call({ value: nil }) }
+
+          it "passes nil through unchanged" do
+            expect(output).to be_nil
+          end
+        end
+
+        context "with cast: :date" do
+          let(:definition) { described_class.new(:value, { cast: :date }, component: component_name) }
+          let(:output) { definition.call({ value: nil }) }
+
+          it "passes nil through unchanged" do
+            expect(output).to be_nil
+          end
+        end
+
+        context "with cast: :datetime" do
+          let(:definition) { described_class.new(:value, { cast: :datetime }, component: component_name) }
+          let(:output) { definition.call({ value: nil }) }
+
+          it "passes nil through unchanged" do
+            expect(output).to be_nil
+          end
+        end
+
+        context "with a callable cast" do
+          let(:caster) { ->(value) { value.to_s } }
+          let(:definition) { described_class.new(:label, { cast: caster }, component: component_name) }
+
+          it "returns nil without casting" do
+            expect(definition.call({ label: nil })).to be_nil
+          end
+
+          it "never invokes the caster" do
+            expect(caster).not_to receive(:call)
+            definition.call({ label: nil })
           end
         end
       end
 
-      context "with cast: :date" do
-        let(:definition) { described_class.new(:starts_on, { cast: :date }, component: component_name) }
+      describe "Casting Default and Fallback Values" do
+        context "when a default is supplied with a cast" do
+          let(:definition) { described_class.new(:mode, { cast: :symbol, default: "dark" }, component: component_name) }
+          let(:output) { definition.call({}) }
 
-        context "when the value is an ISO-8601 date string" do
-          let(:output) { definition.call({ starts_on: "2026-05-20" }) }
-
-          it "parses it to a Date" do
-            expect(output).to eq(Date.new(2026, 5, 20))
+          it "casts the default value" do
+            expect(output).to eq(:dark)
           end
         end
 
-        context "when the value is already a Date" do
-          let(:date) { Date.new(2026, 1, 1) }
-          let(:output) { definition.call({ starts_on: date }) }
+        context "when a fallback is supplied with a cast" do
+          let(:definition) { described_class.new(:mode, { cast: :symbol, fallback: "dark" }, component: component_name) }
+          let(:output) { definition.call({ mode: nil }) }
 
-          it "returns it untouched" do
-            expect(output).to equal(date)
-          end
-        end
-      end
-
-      context "with cast: :datetime" do
-        let(:definition) { described_class.new(:starts_at, { cast: :datetime }, component: component_name) }
-
-        context "when the value is an ISO-8601 datetime string" do
-          let(:output) { definition.call({ starts_at: "2026-05-20T12:00:00Z" }) }
-
-          it "parses it to a Time-like value" do
-            expect(output).to be_a(ActiveSupport::TimeWithZone).or be_a(Time)
-          end
-
-          it "preserves the year" do
-            expect(output.year).to eq(2026)
-          end
-        end
-
-        context "when the value is already a Time" do
-          let(:time) { Time.zone.local(2026, 5, 20, 12) }
-          let(:output) { definition.call({ starts_at: time }) }
-
-          it "returns it untouched" do
-            expect(output).to equal(time)
+          it "casts the fallback value" do
+            expect(output).to eq(:dark)
           end
         end
       end
 
-      context "with a callable cast" do
-        let(:definition) { described_class.new(:slug, { cast: ->(value) { value.to_s.upcase } }, component: component_name) }
-        let(:output) { definition.call({ slug: "hello" }) }
+      describe "Callable and Registered Casters" do
+        context "with a callable cast" do
+          let(:definition) { described_class.new(:slug, { cast: ->(value) { value.to_s.upcase } }, component: component_name) }
+          let(:output) { definition.call({ slug: "hello" }) }
 
-        it "invokes the callable to cast the value" do
-          expect(output).to eq("HELLO")
+          it "invokes the callable to cast the value" do
+            expect(output).to eq("HELLO")
+          end
+        end
+
+        context "when a registered custom caster is used" do
+          let(:definition) { described_class.new(:label, { cast: :reversed }, component: component_name) }
+          let(:output) { definition.call({ label: "abc" }) }
+
+          before do
+            ViewComponentProps.configure { |config| config.register_caster(:reversed) { |value| value.to_s.reverse } }
+          end
+
+          it "dispatches to the registered caster" do
+            expect(output).to eq("cba")
+          end
         end
       end
 
-      context "when a registered custom caster is used" do
-        let(:definition) { described_class.new(:label, { cast: :reversed }, component: component_name) }
-        let(:output) { definition.call({ label: "abc" }) }
+      describe "Low-Level Error Wrapping" do
+        context "when a built-in cast raises an ArgumentError" do
+          let(:definition) { described_class.new(:count, { cast: :integer }, component: component_name) }
 
-        before do
-          ViewComponentProps.configure { |config| config.register_caster(:reversed) { |value| value.to_s.reverse } }
+          it "wraps the error with prop and component context" do
+            expect {
+              definition.call({ count: "abc" })
+            }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to :integer \(got "abc"\)})
+          end
         end
 
-        it "dispatches to the registered caster" do
-          expect(output).to eq("cba")
+        context "when :hash casting a scalar raises a NoMethodError" do
+          let(:definition) { described_class.new(:config, { cast: :hash }, component: component_name) }
+
+          it "wraps it as a CastError" do
+            expect {
+              definition.call({ config: "nope" })
+            }.to raise_error(ViewComponentProps::CastError, %r{Prop :config for TestComponent could not be cast to :hash})
+          end
         end
-      end
 
-      context "when a cast raises a low-level error" do
-        let(:definition) { described_class.new(:count, { cast: :integer }, component: component_name) }
+        context "when a built-in cast raises a RangeError" do
+          let(:definition) { described_class.new(:count, { cast: :integer }, component: component_name) }
 
-        it "wraps the error with prop and component context" do
-          expect {
-            definition.call({ count: "abc" })
-          }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to :integer \(got "abc"\)})
+          it "wraps it as a CastError" do
+            expect {
+              definition.call({ count: Float::INFINITY })
+            }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to :integer})
+          end
         end
-      end
 
-      context "when :hash casting a scalar raises a NoMethodError" do
-        let(:definition) { described_class.new(:config, { cast: :hash }, component: component_name) }
+        context "when a callable cast raises a low-level error" do
+          let(:definition) { described_class.new(:count, { cast: ->(_) { Integer("abc") } }, component: component_name) }
 
-        it "wraps it as a CastError" do
-          expect {
-            definition.call({ config: "nope" })
-          }.to raise_error(ViewComponentProps::CastError, %r{Prop :config for TestComponent could not be cast to :hash})
+          it "wraps it as a CastError describing the callable" do
+            expect {
+              definition.call({ count: "anything" })
+            }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to callable})
+          end
         end
-      end
 
-      context "when a cast raises a RangeError" do
-        let(:definition) { described_class.new(:count, { cast: :integer }, component: component_name) }
+        context "when a callable cast object does not expose a source location" do
+          let(:callable_without_source_location) do
+            Class.new do
+              def call(_value)
+                Integer("abc")
+              end
+            end.new
+          end
+          let(:definition) { described_class.new(:count, { cast: callable_without_source_location }, component: component_name) }
 
-        it "wraps it as a CastError" do
-          expect {
-            definition.call({ count: Float::INFINITY })
-          }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to :integer})
-        end
-      end
-
-      context "when a callable cast raises a low-level error" do
-        let(:definition) { described_class.new(:count, { cast: ->(_) { Integer("abc") } }, component: component_name) }
-
-        it "wraps it as a CastError describing the callable" do
-          expect {
-            definition.call({ count: "anything" })
-          }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to callable})
-        end
-      end
-
-      context "when a callable cast object does not expose a source location" do
-        let(:callable_without_source_location) do
-          Class.new do
-            def call(_value)
-              Integer("abc")
-            end
-          end.new
-        end
-        let(:definition) { described_class.new(:count, { cast: callable_without_source_location }, component: component_name) }
-
-        it "labels the cast as a generic callable in the CastError" do
-          expect {
-            definition.call({ count: "anything" })
-          }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to callable \(})
-        end
-      end
-
-      context "with a nil value and a callable cast" do
-        let(:definition) { described_class.new(:items, { cast: ->(value) { Array(value) } }, component: component_name) }
-        let(:output) { definition.call({ items: nil }) }
-
-        it "passes nil through a callable cast untouched" do
-          expect(output).to be_nil
+          it "labels the cast as a generic callable in the CastError" do
+            expect {
+              definition.call({ count: "anything" })
+            }.to raise_error(ViewComponentProps::CastError, %r{Prop :count for TestComponent could not be cast to callable \(})
+          end
         end
       end
     end
